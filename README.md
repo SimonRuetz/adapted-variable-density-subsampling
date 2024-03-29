@@ -1,7 +1,7 @@
 Adapted variable density subsampling.
 
 
-Packge to reproduce Code from the following Paper.
+Packge to reproduce Code from the following Paper: https://arxiv.org/abs/2206.13796
 
 
 Datasets used in Paper:
