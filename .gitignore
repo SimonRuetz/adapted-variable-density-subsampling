@@ -1,5 +1,6 @@
 #cs/images/*
 images/*
+.vscode/*
 plots/*
 plots_new/*
 uniform.pdf
