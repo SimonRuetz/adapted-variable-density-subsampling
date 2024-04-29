@@ -189,7 +189,6 @@ function process_image(path_vec::String,wf,L,N::Int64,th,flp,dwts)
     C = [zeros(N,N) for i in 1:Threads.nthreads()]
     p = Progress(length(list), dt=0.5,desc="Loading Images and generating distribution...", barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:black);
     if occursin("Net",path_vec)
-        # @infiltrate
         Threads.@threads for j in eachindex(list)
                 i = Threads.threadid()
                 M[i] = size(load(joinpath(path_vec,list[j])))[1]
@@ -201,7 +200,7 @@ function process_image(path_vec::String,wf,L,N::Int64,th,flp,dwts)
                     else
                         C[i] = dwts(img[i],wf,L);
                     end
-                    coeffs[i] +=  (abs.(C[i]) .>= th*norm(C[i]));#sort(vec(abs.(C[i])))[end-165];#
+                    coeffs[i] +=  (abs.(C[i]) .>= th*norm(C[i]));
                 end
                 next!(p)
         end
@@ -216,7 +215,7 @@ function process_image(path_vec::String,wf,L,N::Int64,th,flp,dwts)
             else
                 C[i] = dwts(img[i],wf,L);
             end
-            coeffs[i] += abs.(C[i]) .>= th*norm(C[i]);#sort(vec(abs.(C[i])))[end-165];#
+            coeffs[i] += abs.(C[i]) .>= th*norm(C[i]);
             next!(p)
     end
     end
@@ -226,7 +225,7 @@ function process_image(path_vec::String,wf,L,N::Int64,th,flp,dwts)
     coeff = sum(coeffs);
     Nmax = length(readdir(path_vec)[2:end]);
     S_av = round(sum(sum(coeff)/Nmax))
-    W = sqrt.(coeff./Nmax);
+    # W = sqrt.(coeff./Nmax);
     W = coeff./Nmax;
     return coeff, Nmax, S_av, W
 end

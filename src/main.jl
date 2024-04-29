@@ -1,4 +1,3 @@
-
 function wavelet_test()
     run_tests(; K=2^16, lk=8.0, flp=0, had=0, lines_and_blocks=0,
         train_path=joinpath(pwd(), "images", "Brain4"),
@@ -20,7 +19,6 @@ function levels_test()
         wf=wavelet(WT.db4, WT.Filter), R=10, sep=0)
 end
 
-
 function flip_test()
     run_tests(; K=2^16, lk=15.0, flp=1, had=0, lines_and_blocks=0,
         train_path=joinpath(pwd(), "images", "Brain4"),
@@ -33,10 +31,6 @@ function knee_test()
         train_path=joinpath(pwd(), "images", "MRNet", "train", "coronal"),
         test_path=joinpath(pwd(), "images", "MRNet", "valid", "coronal", "1190.npy"),
         wf=wavelet(WT.db4, WT.Filter), R=10, sep=0)
-    # run_tests(;K = 2^14, lk = 70.,flp = 0, had = 0, lines = 1,
-    # train_path = joinpath(pwd(), "images", "MRNet","train","coronal") ,
-    # test_path = joinpath(pwd(),"images", "MRNet","valid","coronal","1190.npy"),
-    # wf = wavelet(WT.db4, WT.Filter), R = 10)
 end
 
 function line_test()
@@ -48,9 +42,6 @@ end
 
 
 function run_tests(;
-    #DB4 : Flip and Knee
-    #K::Int64 = 2^16, lk::Float64 = 19.,flp::Int64 = 0, had::Int64 = 0, lines::Int64 = 0,
-    #train_path::String = joinpath(pwd(), "images", "MRNet","train","coronal") ,test_path::String = joinpath(pwd(),"images", "MRNet","valid","coronal","1190.npy"))
     K::Int64=2^18, lk::Float64=0.0, flp::Int64=0, had::Int64=0, lines_and_blocks::Int64=0,
     train_path::String=joinpath(pwd(), "images", "Brain4"), test_path::String=joinpath(pwd(), "images", "brain.png"),
     wf=wavelet(WT.db4, WT.Filter), R=20, sep=1)
@@ -173,14 +164,40 @@ function run_tests(;
     δ = 1.0e-7
     μ = 0.2
 
-    #y = mask1.*f(idwt(pinv.(W).*dwt(Im,wf,L),wf,L))/N;
+
+    # Pre(x) = ft(dwt(replace(W.^(-1/2), Inf=>0.0).*dwt(ft(x)*N,wf,L),wf,L))*N
+    # Pre_inv(x) = f(idwt(W.^(1/2).*idwt(f(x)/N,wf,L),wf,L))/N
+    # print("Pre and Pre_inv are defined")
+
+    # A(x) = Pre(f(idwts(x, wf, L)) / N)
+    # At(x) = dwts(ft(Pre_inv(x)) * N, wf, L)
+    # #y = mask1.*f(Im)/N;
+    # y = mask1 .* Pre(f(Im) / N)
+    # im_rec = Nesta_Cont(y, y, mask1, A, At, iter, μ, δ, 1.0, 10)
+    # #im_rec = idwt(W.*dwt(ft(im_rec),wf,L),wf,L)
+    # im_rec = ft(Pre_inv(im_rec)) * N
+    # im_rec = im_rec / norm(im_rec)
+
+    # Pre(x) = f(idwt(replace(W.^(-1/4), Inf=>0).*dwt(x,wf,L),wf,L))/N
+    # Pre_inv(x) = idwt(W.^(1/4).*dwt(ft(x)*N,wf,L),wf,L)
+    # print("Pre and Pre_inv are defined")
+
+    # A(x) = f(idwt(replace(W.^(-1/4), Inf=>0).*x,wf,L))/N
+    # At(x) = W.^(1/4).*dwts(ft(x) * N, wf, L)
+    # #y = mask1.*f(Im)/N;
+    # y = mask1 .* Pre(Im)
+    # im_rec = Nesta_Cont(y, y, mask1, A, At, iter, μ, δ, 1.0, 10)
+    # #im_rec = idwt(W.*dwt(ft(im_rec),wf,L),wf,L)
+    # im_rec = Pre_inv(im_rec)
+    # im_rec = im_rec / norm(im_rec)
+
     y = mask1 .* f(Im) / N
     im_rec = Nesta_Cont(y, y, mask1, A, At, iter, μ, δ, 1.0, 10)
-    #im_rec = idwt(W.*dwt(ft(im_rec),wf,L),wf,L)
     im_rec = ft(im_rec) * N
     im_rec = im_rec / norm(im_rec)
 
-
+    A(x) = f(idwts(x, wf, L)) / N
+    At(x) = dwts(ft(x) * N, wf, L)
     y = mask2 .* f(Im) / N
     im_rec2 = Nesta_Cont(y, y, mask2, A, At, iter, μ, δ, 1.0, 10)
     im_rec2 = ft(im_rec2) * N
@@ -199,7 +216,6 @@ function run_tests(;
     Dist1[Dist1.<=exp(-60)] .= exp(-60)
 
     if lines_and_blocks == 1
-        @infiltrate
         fig = Figure(resolution = (2000, 1800))
         CairoMakie.Axis(fig[1, 1])
         lines!(1:N, fftshift(log.(sampling_probabilities_lines)))
@@ -242,6 +258,10 @@ function run_tests(;
         ax, hm = heatmap(fig[1, 5], W' .^ 2, colormap=:grays)
         Colorbar(fig[1, 6], hm)
         ax, hm = heatmap(fig[2, 5], abs.(Im)', colormap=:grays)
+        # plot the reconstructions in a new row
+        ax, hm = heatmap(fig[3, 1], abs.(im_rec)', colormap=:grays)
+        ax, hm = heatmap(fig[3, 3], abs.(im_rec2)', colormap=:grays)
+        ax, hm = heatmap(fig[3, 5], abs.(Im)', colormap=:grays)
         display(fig)
     end
     println("adapted variable density sub psnr:")
@@ -375,7 +395,7 @@ function uniform_test(;
     Dist1[Dist1.<=exp(-60)] .= exp(-60)
 
     clims = (minimum([Dist1 Dist2 Dist3]), maximum([Dist1 Dist2 Dist3]) + 1e-6)
-    @infiltrate
+
     if had == 0
         fig = Figure(resolution=(1800, 1000))
         ax, hm = contourf(fig[1, 1], fftshift(log.(Dist1')), colorrange=log.(clims))
