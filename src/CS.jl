@@ -44,11 +44,11 @@ function main()
     A = zeros(5, 3)
     runs=10
     for i = 1:runs
-        #A[1, 1:2] .+= wavelet_test()
-        #A[2, 1:2] .+= knee_test()
+        A[1, 1:2] .+= wavelet_test()
+        A[2, 1:2] .+= knee_test()
         A[3, 1:2] .+= flip_test()
-        #A[4, 1:3] .+= uniform_test()
-        #A[5, 1:2] .+= line_test()
+        A[4, 1:3] .+= uniform_test()
+        A[5, 1:2] .+= line_test()
     end
     return A ./runs
 end
