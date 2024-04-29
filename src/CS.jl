@@ -23,7 +23,7 @@ function flip_test()
     run_tests(; K=2^16, lk=15.0, flp=1, had=0, lines_and_blocks=0,
         train_path=joinpath(pwd(), "images", "Brain4"),
         test_path=joinpath(pwd(), "images", "brain.png"),
-        wf=wavelet(WT.db4, WT.Filter), R=10, sep=0)
+        wf=wavelet(WT.db4, WT.Filter), R=4, sep=0)
 end
 
 function knee_test()
@@ -42,12 +42,13 @@ end
 
 function main()
     A = zeros(5, 3)
-    for i = 1:10
-        A[1, 1:2] .+= wavelet_test()
-        A[2, 1:2] .+= knee_test()
+    runs=10
+    for i = 1:runs
+        #A[1, 1:2] .+= wavelet_test()
+        #A[2, 1:2] .+= knee_test()
         A[3, 1:2] .+= flip_test()
-        A[4, 1:3] .+= uniform_test()
-        A[5, 1:2] .+= line_test()
+        #A[4, 1:3] .+= uniform_test()
+        #A[5, 1:2] .+= line_test()
     end
-    return A
+    return A ./runs
 end
