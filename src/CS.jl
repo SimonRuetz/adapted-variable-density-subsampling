@@ -46,6 +46,16 @@ This function runs all tests and returns the average results over `runs` runs.
 
 # Arguments
 - `runs::Int`: The number of runs to average over.
+
+# Returns
+- `A::Array{Float64, 2}`: A 5x3 matrix containing the average results of the tests.
+    The rows correspond to the tests and the columns to the metrics.
+    The tests are:
+        1. Wavelet test
+        2. Knee test
+        3. Flip test
+        4. Uniform test
+        5. Line test
 """
 function main(runs=10)
     A = zeros(5, 3)
