@@ -40,9 +40,15 @@ function line_test()
         wf=wavelet(WT.db4, WT.Filter), R=5, sep=1)
 end
 
-function main()
+
+"""
+This function runs all tests and returns the average results over `runs` runs.
+
+# Arguments
+- `runs::Int`: The number of runs to average over.
+"""
+function main(runs=10)
     A = zeros(5, 3)
-    runs=10
     for i = 1:runs
         A[1, 1:2] .+= wavelet_test()
         A[2, 1:2] .+= knee_test()

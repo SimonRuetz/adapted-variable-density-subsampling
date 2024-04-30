@@ -1,3 +1,31 @@
+"""
+This function runs all tests and returns the average results over `runs` runs.
+
+# Arguments
+- `runs::Int`: The number of runs to average over.
+"""
+
+"""
+This function runs the tests for the different sampling algorithms. It generates the sampling distributions from the datasets
+and runs the l1 minimisation algorithm for the different sampling distributions. It then calculates the psnr of the
+reconstructions and plots the sampling distributions and the reconstructions.
+
+# Arguments
+- `K::Int64=2^18`: The size of the images
+- `lk::Float64=0.0`: The threshold for the wavelet coefficients to estimate the sparse CairoMakie.SUPPORTED_MIMES
+- `flp::Int64=0`: Whether to flip the images or not (0 for no flip, 1 for flip)
+- `had::Int64=0`: Whether to use the hadamard transform or the fft (0 for fft, 1 for hadamard)
+- `lines_and_blocks::Int64=0`: Whether to use the lines and blocks sampling distribution or not (0 for no, 1 for yes)
+- `train_path::String=joinpath(pwd(), "images", "Brain4")`: The path to the training images
+- `test_path::String=joinpath(pwd(), "images", "brain.png")`: The path to the test image
+- `wf=wavelet(WT.db4, WT.Filter)`: The wavelet filter to use
+- `R=20`: The subsampling rate, i.e. 20 means that 1/20 of the coefficients are sampled
+- `sep=1`: Whether to use the separable wavelet transform or not (0 for no, 1 for yes)
+
+# Returns
+- `var1`: The psnr of the l1 minimisation algorithm with the adapted sampling distribution
+- `var2`: The psnr of the l1 minimisation algorithm with the max coherence sampling distribution
+"""
 function run_tests(;
     K::Int64=2^18,
     lk::Float64=0.0,
@@ -10,6 +38,7 @@ function run_tests(;
     R=20,
     sep=1
     )
+
 
     N = Int(sqrt(K))
     th = (lk * 0.02) * sqrt(2 * (log(2 * K) - log(1 / 2)) / K)
@@ -231,7 +260,23 @@ function run_tests(;
     return var1, var2
 end
 
+"""
+This function runs the uniform test for the l1 minimisation algorithm. It generates uniformly distributed sparse images
+and runs the l1 minimisation algorithm for the different sampling distributions. It then calculates the psnr of the
+reconstructions and plots the sampling distributions and the reconstructions.
 
+# Arguments
+- `K::Int64=2^16`: The size of the images
+- `had::Int64=1`: Whether to use the hadamard transform or the fft (0 for fft, 1 for hadamard)
+- `lines::Int64=0`: Whether to use the lines and blocks sampling distribution or not (0 for no, 1 for yes)
+- `wf=wavelet(WT.haar, WT.Filter)`: The wavelet filter to use
+- `R=20`: The subsampling rate, i.e. 20 means that 1/20 of the coefficients are sampled
+
+# Returns
+- `var1`: The psnr of the l1 minimisation algorithm with the adapted sampling distribution
+- `var2`: The psnr of the l1 minimisation algorithm with the max coherence sampling distribution
+- `var3`: The psnr of the l1 minimisation algorithm with the uniform sampling distribution
+"""
 function uniform_test(;
     K::Int64=2^16, had::Int64=1, lines::Int64=0,
     wf=wavelet(WT.haar, WT.Filter), R=20)
@@ -345,6 +390,19 @@ function uniform_test(;
     return var1, var2, var3
 end
 
+"""
+This function flips the wavelet coefficients of an image.
+
+# Arguments
+- `M`: The image
+- `wf`: The wavelet filter
+- `L`: The maximum number of wavelet levels
+- `K`: The size of the images
+- `N`: The size of the images
+
+# Returns
+- The flipped image
+"""
 
 function flip(M,wf,L,K,N)
     # Function that flips the wavelet coefficients
@@ -382,6 +440,27 @@ function Nesta(y,z₀,mask,A,At,niter,μ::Float64=0.2, η::Float64=1.,c::Number=
     return(z)
 end
 
+
+"""
+This function runs the Nesta algorithm for l1 minimisation for a given number of iterations and a given number of
+adaptations of the sampling distribution.
+
+# Arguments
+- `y`: The measurements
+- `z₀`: The initial guess
+- `mask`: The sampling distribution, i.e. the locations of the measurements in the Fourier domain
+- `A`: The forward operator
+- `At`: The adjoint operator
+- `niter`: The number of iterations
+- `μ::Float64=0.2`: The parameter for the Nesta algorithm
+- `η::Float64=1.`: The parameter for the Nesta algorithm
+- `c::Number=1.`: The parameter for the Nesta algorithm
+- `Cont::Number=1`: The number of adaptations of the sampling distribution
+
+# Returns
+- `z₀`: The reconstructed image
+"""
+
 function Nesta_Cont(y,z₀,mask,A,At,niter,μ::Float64=0.2, η::Float64=1.,c::Number=1.,Cont ::Number = 1)
     p = Progress(Cont, dt=0.5,desc = "l1 - minimisation...", barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:black);
     for i = 1:Cont
@@ -390,6 +469,25 @@ function Nesta_Cont(y,z₀,mask,A,At,niter,μ::Float64=0.2, η::Float64=1.,c::Nu
     end
     return z₀
 end
+
+"""
+This function generates the optimal subsampling distribution in the l2 sense. It uses the estimated weights of the distribution in the
+Wavelet domain to calculate the optimal subsampling distribution.
+
+# Arguments
+- `W`: The estimated weights of the distribution in the Wavelet domain
+- `wf`: The wavelet filter
+- `L`: The maximum number of wavelet levels
+- `N`: The size of the images
+- `f`: The Fourier transform
+- `lines_and_blocks::Int64=0`: Whether to use the lines and blocks sampling distribution or not (0 for no, 1 for yes)
+
+# Returns
+- `Dist1`: The optimal subsampling distribution in the l2 sense
+- `Dist3`: The max coherence sampling distribution
+- `sampling_probabilities_lines`: The sampling probabilities for the lines
+- `sampling_probabilities_blocks`: The sampling probabilities for the blocks
+"""
 
 function generate_l2_dist(W,wf,L,N,f,lines_and_blocks)
     # W .... 2D Weight matrix of Wavelet Basis
@@ -517,6 +615,27 @@ function generate_l2_dist(W,wf,L,N,f,lines_and_blocks)
 
     return adapted_distribution, max_coherence_distribution, sampling_probabilities_lines, sampling_probabilities_blocks
 end
+
+
+"""
+This function loads images and generates the wavelet distribution. It loads the images, calculates the wavelet coefficients, uses the 
+threshold to determine the support of the wavelet coefficients and sums the supports up to get an estimate the wavelet distribution.
+
+# Arguments
+- `path_vec::String`: Path to the images
+- `wf`: The wavelet filter
+- `L`: The maximum number of wavelet levels
+- `N::Int64`: The size of the images
+- `th`: The threshold for the wavelet coefficients
+- `flp`: Whether to flip the images or not
+- `dwts`: The wavelet transform
+
+# Returns
+- `coeff`: The estimated wavelet distribution
+- `Nmax`: The number of images
+- `S_av`: The average number of wavelet coefficients
+- `W`: The estimated wavelet distribution
+"""
 
 function process_image(path_vec::String,wf,L,N::Int64,th,flp,dwts)
     # Function that processes images and generates the wavelet distribution
